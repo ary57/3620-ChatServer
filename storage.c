@@ -18,8 +18,6 @@ channel_list_t *get_channels() {
 channel_t *create_channel(channel_list_t *channels, const char *name) {
 	channel_t *pointer = channels->head;
 
-	// if(pointer == NULL) printf("%s\n", "NAY");
-
 	while(pointer != NULL){
 		char *ptrName = (char *) pointer->name; 
 		if(strcmp(ptrName, name) == 0){
