@@ -68,13 +68,13 @@ void free_messages(channel_t *channel){
 
 
 void free_channels(channel_list_t *channels) {
-	// channel_t *toFree = channels->head;
-	// while(toFree != NULL){
-	// 	channel_t *toFreeNext = toFree->next; 
-	// 	free_messages(toFree);
-	// 	free(toFree); 
-	// 	toFree = toFreeNext; 
-	// }
+	channel_t *toFree = channels->head;
+	while(toFree != NULL){
+		channel_t *toFreeNext = toFree->next; 
+		free_messages(toFree);
+		free(toFree); 
+		toFree = toFreeNext; 
+	}
 }
 
 void add_message(channel_t *channel, const char *text) {
