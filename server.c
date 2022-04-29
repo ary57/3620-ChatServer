@@ -14,6 +14,45 @@
 
 #define PORT 8080
 
+int retrive_message_resp(int client_socket){
+	size_t channel_size;
+	char *channel_name; 
+	message_id_t msg_id;
+
+	read(client_socket, &channel_size, sizeof(size_t));
+	read(client_socket, channel_name, channel_size);
+	read(client_socket, &msg_id, sizeof(msg_id));
+
+	channel_list_t *channels = get_channels();
+	channel_t *channel = get_channel(channels, channel_name);
+
+	if(channel == NULL){
+		size_t errorSize = sizeof("!! Channel not found\n");
+		char * error = (char *) malloc(errorSize);
+		error = "!! Channel not found\n";
+		write(client_socket, &errorSize, sizeof(errorSize));
+		write(client_socket, error, errorSize);
+		return 1; 
+	}
+	
+	message_t *msg = get_message(channel, msg_id);
+	if(msg == NULL){
+		size_t errorSize = sizeof("!! Message not found\n");
+		char * error = (char *) malloc(errorSize);
+		error = "!! Message not found\n";
+		write(client_socket, &errorSize, sizeof(errorSize));
+		write(client_socket, error, errorSize);
+		return 1; 
+	}
+	const char *txt = msg->text;
+
+	size_t txt_len = strlen(txt);
+
+	write(client_socket, &txt_len, sizeof(txt_len));
+	ssize_t s = write(client_socket, txt, txt_len);
+
+	return 0;
+}
 
 
 void run_server(int sockfd, int num_threads) {
@@ -30,6 +69,27 @@ void run_server(int sockfd, int num_threads) {
             printf("server accept the client...\n");
 
 			// implement the communication with the client
+			/*
+				USED FLAGS: 
+				0 - retrieve message
+				1 - retrieve messages
+				2 - send messages
+				3 - help???
+			*/
+			int flag; 
+			read(client_socket, &flag, sizeof(int));
+
+			switch(flag){
+				case 0:
+					retrive_message_resp(client_socket);
+					break;
+				case 1:
+					break;
+				case 2:
+					break; 
+				case 3:
+					break;
+			}
         }
     }
 }

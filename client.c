@@ -13,7 +13,27 @@
 // retrieve the message from the channel with name equal to channel name
 // returns 0 if channel and message were found, otherwise -1.
 int retrieve_message(int socket, const char *channel_name, message_id_t msg_id) {
+
+	int flag = 0; 
+	write(socket, &flag, sizeof(flag));
+
+	size_t len = strlen(channel_name);
+	write(socket, &len, sizeof(len));
+	
+	write(socket, channel_name, len);
+	write(socket, &msg_id, sizeof(msg_id));
+
+	
+	size_t msg_len; 
+	read(socket, &msg_len, sizeof(msg_len));
+
+	char *msg = (char *) malloc(msg_len);
+	read(socket, msg, msg_len);
+	if(msg[0] != '!') printf("!! %s>> %s\n", channel_name,msg);
+	else printf("%s\n", msg);
+
 	return 0;
+
 }
 
 void retrieve_messages(int socket, const char *channel_name) {
