@@ -63,6 +63,17 @@ void retrieve_messages(int socket, const char *channel_name) {
 }
 
 void send_message(int socket, const char *channel, char *text) {
+	int flag = 2;
+	write(socket, &flag, sizeof(flag)); 
+
+	size_t channel_len = strlen(channel);
+	write(socket, &channel_len, sizeof(size_t));
+	write(socket, channel, channel_len);
+
+	size_t text_len = strlen(text); 
+	write(socket, &text_len, sizeof(size_t));
+	write(socket, text, text_len); 
+
 }
 
 void help(char **argv) {

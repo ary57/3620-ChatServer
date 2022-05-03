@@ -93,6 +93,31 @@ void retrive_messages_resp(int client_socket){
 	}while(msg != NULL);
 }
 
+void send_message_resp(int client_socket){
+	size_t channel_size;
+	char *channel_name;
+	size_t text_size; 
+	char *text; 
+
+	read(client_socket, &channel_size, sizeof(size_t));
+	read(client_socket, channel_name, channel_size);
+
+	read(client_socket, &text_size, sizeof(size_t));
+	text = (char *) malloc(text_size);
+	read(client_socket, text, text_size);
+
+	channel_list_t *channel_list = get_channels();
+	channel_t *channel = get_channel(channel_list, channel_name);
+
+	if(channel == NULL){
+		channel = create_channel(channel_list, channel_name);
+	}
+	add_message(channel, text);
+
+	// printf("message added: %s", text);
+	
+}
+
 
 void run_server(int sockfd, int num_threads) {
     struct sockaddr_in cli;
@@ -126,6 +151,7 @@ void run_server(int sockfd, int num_threads) {
 					retrive_messages_resp(client_socket); 
 					break;
 				case 2:
+					send_message_resp(client_socket);
 					break; 
 				case 3:
 					break;
