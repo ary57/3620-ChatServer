@@ -14,7 +14,7 @@
 
 #define PORT 8080
 
-int retrive_message_resp(int client_socket){
+void retrive_message_resp(int client_socket){
 	size_t channel_size;
 	char *channel_name; 
 	message_id_t msg_id;
@@ -32,7 +32,7 @@ int retrive_message_resp(int client_socket){
 		error = "!! Channel not found\n";
 		write(client_socket, &errorSize, sizeof(errorSize));
 		write(client_socket, error, errorSize);
-		return 1; 
+		return;
 	}
 	
 	message_t *msg = get_message(channel, msg_id);
@@ -42,16 +42,55 @@ int retrive_message_resp(int client_socket){
 		error = "!! Message not found\n";
 		write(client_socket, &errorSize, sizeof(errorSize));
 		write(client_socket, error, errorSize);
-		return 1; 
+		return;
 	}
 	const char *txt = msg->text;
 
 	size_t txt_len = strlen(txt);
 
 	write(client_socket, &txt_len, sizeof(txt_len));
-	ssize_t s = write(client_socket, txt, txt_len);
+	write(client_socket, txt, txt_len);
+}
 
-	return 0;
+void retrive_messages_resp(int client_socket){
+	size_t channel_size;
+	char *channel_name; 
+
+	read(client_socket, &channel_size, sizeof(size_t));
+	read(client_socket, channel_name, channel_size);
+
+	channel_list_t *channels = get_channels();
+	channel_t *channel = get_channel(channels, channel_name);
+
+	if(channel == NULL){
+		size_t errorSize = sizeof("!! Channel not found\n");
+		char * error = (char *) malloc(errorSize);
+		error = "!! Channel not found\n";
+		write(client_socket, &errorSize, sizeof(errorSize));
+		write(client_socket, error, errorSize);
+		return;
+	}
+	
+	message_t *msg;
+	message_id_t msg_id = 0;
+	do{
+		msg = get_message(channel, msg_id);
+		if(msg == NULL){
+			size_t errorSize = sizeof("!! Message not found\n");
+			char * error = (char *) malloc(errorSize);
+			error = "!! Message not found\n";
+			write(client_socket, &errorSize, sizeof(errorSize));
+			write(client_socket, error, errorSize);
+			return;
+		}
+		const char *txt = msg->text;
+
+		size_t txt_len = strlen(txt);
+
+		write(client_socket, &txt_len, sizeof(txt_len));
+		write(client_socket, txt, txt_len);
+		msg_id++;
+	}while(msg != NULL);
 }
 
 
@@ -84,6 +123,7 @@ void run_server(int sockfd, int num_threads) {
 					retrive_message_resp(client_socket);
 					break;
 				case 1:
+					retrive_messages_resp(client_socket); 
 					break;
 				case 2:
 					break; 

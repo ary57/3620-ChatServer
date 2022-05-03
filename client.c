@@ -29,14 +29,37 @@ int retrieve_message(int socket, const char *channel_name, message_id_t msg_id) 
 
 	char *msg = (char *) malloc(msg_len);
 	read(socket, msg, msg_len);
-	if(msg[0] != '!') printf("!! %s>> %s\n", channel_name,msg);
-	else printf("%s\n", msg);
-
-	return 0;
+	if(msg[0] != '!'){
+		printf("!! %s>> %s\n", channel_name,msg);
+		return 0; 
+	}
+	else{
+		printf("%s\n", msg);
+		return -1; 
+	}
 
 }
 
 void retrieve_messages(int socket, const char *channel_name) {
+	int flag = 1; 
+	write(socket, &flag, sizeof(flag));
+	
+	size_t len = strlen(channel_name);
+	write(socket, &len, sizeof(len));
+	write(socket, channel_name, len);
+
+	char *msg; 
+	size_t msg_len; 
+	
+	do{
+		read(socket, &msg_len, sizeof(msg_len)); 
+		msg = (char *) malloc(msg_len); 
+		read(socket, msg, msg_len); 
+		if(msg[0] == '!') return; 
+		printf("!! %s>> %s\n", channel_name,msg);
+		free(msg); 
+	}while(1);
+
 }
 
 void send_message(int socket, const char *channel, char *text) {
