@@ -21,7 +21,7 @@ channel_t *create_channel(channel_list_t *channels, const char *name) {
 	while(pointer != NULL){
 		char *ptrName = (char *) pointer->name; 
 		if(strcmp(ptrName, name) == 0){
-			printf("%s: %s\n", "Duplicate Found", name);
+			// printf("%s: %s\n", "Duplicate Found", name);
 			return pointer; 
 		}
 		pointer = pointer->next;
@@ -32,12 +32,14 @@ channel_t *create_channel(channel_list_t *channels, const char *name) {
 	c->next = NULL; // should this be null? once this is added to the end of the list, it's next should be null.
 	c->head = NULL; // Head of the messages linked list. Should be null initially?
 	c->tail = NULL; // End of messages linked list. Should be null initially?
-	c->last_msg = -1; 
+	c->last_msg = -1; // is this just the message id of the message before it? if it is, what should be the initial value for the first message in the messages? -- resolved; is the 'length' of the linked list
 
 	if(channels->head == NULL){
 		channels->head = c; 
 		channels->tail = c; 
+		c->last_msg = 1;
 	}else{
+		c->last_msg = channels->tail->last_msg + 1;
 		channels->tail->next = c; 
 		channels->tail = c; 
 	}
@@ -92,7 +94,7 @@ void add_message(channel_t *channel, const char *text) {
 message_t *get_message(channel_t *channel, message_id_t id) {
 	message_t *pointer = channel->head; 
 	while(pointer != NULL){
-		if(pointer->id == id) return pointer;  // is there a strcmp version of this or is == ok to compare?
+		if(pointer->id == id) return pointer;
 		pointer = pointer->next; 
 	}
 	return NULL; 
@@ -110,5 +112,19 @@ void dump(channel_list_t *channels) {
 }
 
 /*
- * Note to self: the segmentation fault in test_step_1.c makes sense. It dumps first, then frees it then prints it again. 
+ * Note to self: the segmentation fault in test_step_1.c makes sense. It dumps first, then frees it then prints it by accessing the freed stuff again. 
+*/
+
+/*
+100 -86 A
+86-72   B
+72-44   C
+44-0    D
+*/
+
+/*
+ A: 86+ 
+ B: 86-72
+ C: 72-44
+ D 44-0
 */

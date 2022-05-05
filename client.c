@@ -9,6 +9,13 @@
 
 #define PORT 8080
 
+// lock per channel data structure? or a lock to access the channel, and lock for each message list? the latter one is more difficult. 
+// must spawn a thread:
+// 	pthread_create
+//  pthread_join 
+// 		look at the benchmark code from hw4
+// 		only need to do it for server
+// 		one way to test it is to open multiple terminals of client and testing.
 
 // retrieve the message from the channel with name equal to channel name
 // returns 0 if channel and message were found, otherwise -1.
@@ -61,7 +68,7 @@ void retrieve_messages(int socket, const char *channel_name) {
 	}while(1);
 
 }
-
+// if the text already exists, do we still add the text or do we ignore the command because the text already exists?
 void send_message(int socket, const char *channel, char *text) {
 	int flag = 2;
 	write(socket, &flag, sizeof(flag)); 
