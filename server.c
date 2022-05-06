@@ -226,7 +226,7 @@ int main() {
     }
 
 	// Now server is ready to listen and verification
-	if ((listen(sockfd, 5)) != 0) {
+	if ((listen(sockfd, 100)) != 0) { // <----- there was (sockfd, 5), i changed to (sockfd, 100)
 		printf("Listen failed...\n");
 		exit(0);
 	} else {

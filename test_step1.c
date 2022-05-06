@@ -7,7 +7,7 @@ int main() {
 	channels->head = channels->tail = NULL;
 	channel_t *weather = create_channel(channels, "weather");
 	create_channel(channels, "news");
-    // create_channel(channels, "the_empty_channel");
+    create_channel(channels, "the_empty_channel");
 
 	add_message(weather, "the weather is going to be great!");
 	add_message(weather, "sunny with a high of 70F");
@@ -19,12 +19,6 @@ int main() {
 	dump(channels);
 
     free_channels(get_channels());
-    
-    printf("AFTER THE FIRST FREE\n");
-    if(channels == NULL) printf("CHANNEL IS NULL\n");
-    else printf("CHANNEL IS NOT NULL \n");
-
-    // printf("channels->head->name: %s\n",channels->head->name);
     
     dump(channels);
 

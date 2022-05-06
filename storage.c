@@ -75,6 +75,8 @@ void free_messages(channel_t *channel){
 		free(toFree); 
 		toFree = toFreeNext;
 	}
+	channel->head = NULL; 
+	channel->tail = NULL; 
 }
 
 
@@ -86,6 +88,8 @@ void free_channels(channel_list_t *channels) {
 		free(toFree); 
 		toFree = toFreeNext; 
 	}
+	channels->head = NULL; 
+	channels->tail = NULL; 
 }
 
 // void free_channels(channel_list_t *channels){

@@ -1,0 +1,14 @@
+I roughly spent around 15 hours on this assignment.
+    about 2-3 hours was spent understanding socket programming and leanring how to implement them.
+    another couple hours were spent just looking at the code and trying to comprehend the program and to understand what to do. 
+    around 1-2 hours with actual programming and the  rest of the time was spent debugging 
+
+From this assignment, I have mainly learnt the fundamentals of socket programming in C.
+I have also learned to utilize structs in C as well as gotten a deeper knowledge of how memory allocation using malloc works. 
+If I were to start this assignment all over again, I would try to utilize structs much more than I did for this assignment. 
+    I only came to realize the usefulness of structs as I was finishing up with the assignment . 
+    I felt that my program would be much more structured and easy to understand if I had properly utilized structs. 
+Another thing I have leanred is to use version control properly. During this project, i found myself receiving segmentation faults after segmentation faults. 
+    A way I was able to navigate those was by using version control and commiting my code incrementally as I went along and going back to my last commit if I got any segmentation faults
+    and restarting the work from there. 
+Lastly, I've also leared the basics of multithreaded programs using pthreads in C. 
