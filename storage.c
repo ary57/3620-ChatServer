@@ -113,6 +113,7 @@ void add_message(channel_t *channel, const char *text) {
 
 	message_t *m = (message_t *) malloc(sizeof(message_t));
 	m->text = text;
+	m->next = NULL; 
 	if(channel->head == NULL){ 
 		m->id = (message_id_t) 0;
 		channel->head = m;
