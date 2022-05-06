@@ -14,9 +14,141 @@
 
 #define PORT 8080
 
+void retrive_message_resp(int client_socket){
+	size_t channel_size;
+	char *channel_name; 
+	message_id_t msg_id;
 
+	read(client_socket, &channel_size, sizeof(size_t));
+	read(client_socket, channel_name, channel_size);
+	read(client_socket, &msg_id, sizeof(msg_id));
 
-void run_server(int sockfd, int num_threads) {
+	channel_list_t *channels = get_channels();
+	
+	pthread_mutex_lock(&channels->lock); 
+	
+	channel_t *channel = get_channel(channels, channel_name);
+
+	if(channel == NULL){
+		size_t errorSize = sizeof("!! Channel not found\n");
+		char * error = (char *) malloc(errorSize);
+		error = "!! Channel not found\n";
+		write(client_socket, &errorSize, sizeof(errorSize));
+		write(client_socket, error, errorSize);
+		
+		pthread_mutex_unlock(&channels->lock); 
+		
+		return;
+	}
+	
+	message_t *msg = get_message(channel, msg_id);
+	if(msg == NULL){
+		size_t errorSize = sizeof("!! Message not found\n");
+		char * error = (char *) malloc(errorSize);
+		error = "!! Message not found\n";
+		write(client_socket, &errorSize, sizeof(errorSize));
+		write(client_socket, error, errorSize);
+		
+		pthread_mutex_unlock(&channels->lock); 
+		
+		return;
+	}
+	const char *txt = msg->text;
+
+	size_t txt_len = strlen(txt);
+
+	write(client_socket, &txt_len, sizeof(txt_len));
+	write(client_socket, txt, txt_len);
+	
+	pthread_mutex_unlock(&channels->lock); 
+}
+
+void retrive_messages_resp(int client_socket){
+	size_t channel_size;
+	char *channel_name; 
+
+	read(client_socket, &channel_size, sizeof(size_t));
+	read(client_socket, channel_name, channel_size);
+
+	channel_list_t *channels = get_channels();
+	
+	pthread_mutex_lock(&channels->lock); 
+	
+	channel_t *channel = get_channel(channels, channel_name);
+
+	if(channel == NULL){
+		size_t errorSize = sizeof("!! Channel not found\n");
+		char * error = (char *) malloc(errorSize);
+		error = "!! Channel not found\n";
+		write(client_socket, &errorSize, sizeof(errorSize));
+		write(client_socket, error, errorSize);
+
+		pthread_mutex_unlock(&channels->lock); 
+
+		return;
+	}
+	
+	message_t *msg;
+	message_id_t msg_id = 0;
+	do{
+		msg = get_message(channel, msg_id);
+		if(msg == NULL){
+			size_t errorSize = sizeof("!! Message not found\n");
+			char * error = (char *) malloc(errorSize);
+			error = "!! Message not found\n";
+			write(client_socket, &errorSize, sizeof(errorSize));
+			write(client_socket, error, errorSize);
+			pthread_mutex_unlock(&channels->lock); 
+			return;
+		}
+		const char *txt = msg->text;
+
+		size_t txt_len = strlen(txt);
+
+		write(client_socket, &txt_len, sizeof(txt_len));
+		write(client_socket, txt, txt_len);
+		msg_id++;
+	}while(msg != NULL);
+	pthread_mutex_unlock(&channels->lock); 
+}
+
+void send_message_resp(int client_socket){
+	size_t channel_size;
+	char *channel_name;
+	size_t text_size; 
+	char *text; 
+
+	read(client_socket, &channel_size, sizeof(size_t));
+	read(client_socket, channel_name, channel_size);
+
+	read(client_socket, &text_size, sizeof(size_t));
+	text = (char *) malloc(text_size);
+	read(client_socket, text, text_size);
+
+	channel_list_t *channels = get_channels();
+	pthread_mutex_lock(&channels->lock); 
+	channel_t *channel = get_channel(channels, channel_name);
+
+	if(channel == NULL){
+		channel = create_channel(channels, channel_name);
+	}
+	add_message(channel, text);
+	pthread_mutex_unlock(&channels->lock); 
+
+	// printf("message added: %s", text);
+	
+}
+
+typedef struct args{
+	int num_threads, socket;
+}args_t; 
+
+// void run_server(int sockfd, int num_threads) {
+void run_server(void * args) {
+	args_t arg = *(args_t *) args; 	
+	int sockfd = arg.socket;
+	int num_clients = arg.num_threads;
+
     struct sockaddr_in cli;
     socklen_t len = sizeof(cli);
 
@@ -30,12 +162,32 @@ void run_server(int sockfd, int num_threads) {
             printf("server accept the client...\n");
 
 			// implement the communication with the client
+			/*
+				USED FLAGS: 
+				0 - retrieve message
+				1 - retrieve messages
+				2 - send messages
+				3 - help???
+			*/
+			int flag; 
+			read(client_socket, &flag, sizeof(int));
+
+			switch(flag){
+				case 0:
+					retrive_message_resp(client_socket);
+					break;
+				case 1:
+					retrive_messages_resp(client_socket); 
+					break;
+				case 2:
+					send_message_resp(client_socket);
+					break; 
+				case 3:
+					break;
+			}
         }
     }
 }
-
-
-
 
 int main() {
 	channel_list_t *channels = get_channels();
@@ -81,7 +233,29 @@ int main() {
 		printf("Server listening..\n");
     }
 	
-    run_server(sockfd, 10);
+	int num_threads = 100; 
+
+	pthread_t threads[num_threads];
+
+	args_t args = *(args_t *) malloc(sizeof(args_t));
+	args.socket = sockfd; 
+
+    for (int i = 0; i < num_threads; i++) {
+        int r = pthread_create(&threads[i], NULL, (void *)run_server, &args);
+        if (r != 0) {
+            printf("Failure to create thread\n");
+            exit(-1);
+        } 
+    } 
+
+	for (int i = 0; i < num_threads; i++) {
+        int r = pthread_join(threads[i], NULL);
+        if (r != 0) {
+            printf("Failure to join on thread\n");
+            exit(-1);
+        }
+    }
+    // run_server(sockfd, 10);
 
 
 

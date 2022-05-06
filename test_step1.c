@@ -4,12 +4,10 @@
 
 int main() {
     channel_list_t *channels = get_channels();
-    // printf("GOT HERE1\n");
 	channels->head = channels->tail = NULL;
 	channel_t *weather = create_channel(channels, "weather");
 	create_channel(channels, "news");
-    create_channel(channels, "the_empty_channel");
-    printf("GOT HERE1\n");
+    // create_channel(channels, "the_empty_channel");
 
 	add_message(weather, "the weather is going to be great!");
 	add_message(weather, "sunny with a high of 70F");
@@ -19,9 +17,15 @@ int main() {
     add_message(news, "yay!");
     add_message(news, ":-)");
 	dump(channels);
-    printf("GOT HERE\n");
-    free_channels(get_channels());
 
+    free_channels(get_channels());
+    
+    printf("AFTER THE FIRST FREE\n");
+    if(channels == NULL) printf("CHANNEL IS NULL\n");
+    else printf("CHANNEL IS NOT NULL \n");
+
+    // printf("channels->head->name: %s\n",channels->head->name);
+    
     dump(channels);
 
     return 0;
