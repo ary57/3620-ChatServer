@@ -24,6 +24,9 @@ void retrive_message_resp(int client_socket){
 	read(client_socket, &msg_id, sizeof(msg_id));
 
 	channel_list_t *channels = get_channels();
+	
+	pthread_mutex_lock(&channels->lock); 
+	
 	channel_t *channel = get_channel(channels, channel_name);
 
 	if(channel == NULL){
@@ -32,6 +35,9 @@ void retrive_message_resp(int client_socket){
 		error = "!! Channel not found\n";
 		write(client_socket, &errorSize, sizeof(errorSize));
 		write(client_socket, error, errorSize);
+		
+		pthread_mutex_unlock(&channels->lock); 
+		
 		return;
 	}
 	
@@ -42,6 +48,9 @@ void retrive_message_resp(int client_socket){
 		error = "!! Message not found\n";
 		write(client_socket, &errorSize, sizeof(errorSize));
 		write(client_socket, error, errorSize);
+		
+		pthread_mutex_unlock(&channels->lock); 
+		
 		return;
 	}
 	const char *txt = msg->text;
@@ -50,6 +59,8 @@ void retrive_message_resp(int client_socket){
 
 	write(client_socket, &txt_len, sizeof(txt_len));
 	write(client_socket, txt, txt_len);
+	
+	pthread_mutex_unlock(&channels->lock); 
 }
 
 void retrive_messages_resp(int client_socket){
@@ -60,6 +71,9 @@ void retrive_messages_resp(int client_socket){
 	read(client_socket, channel_name, channel_size);
 
 	channel_list_t *channels = get_channels();
+	
+	pthread_mutex_lock(&channels->lock); 
+	
 	channel_t *channel = get_channel(channels, channel_name);
 
 	if(channel == NULL){
@@ -68,6 +82,9 @@ void retrive_messages_resp(int client_socket){
 		error = "!! Channel not found\n";
 		write(client_socket, &errorSize, sizeof(errorSize));
 		write(client_socket, error, errorSize);
+
+		pthread_mutex_unlock(&channels->lock); 
+
 		return;
 	}
 	
@@ -81,6 +98,7 @@ void retrive_messages_resp(int client_socket){
 			error = "!! Message not found\n";
 			write(client_socket, &errorSize, sizeof(errorSize));
 			write(client_socket, error, errorSize);
+			pthread_mutex_unlock(&channels->lock); 
 			return;
 		}
 		const char *txt = msg->text;
@@ -91,6 +109,7 @@ void retrive_messages_resp(int client_socket){
 		write(client_socket, txt, txt_len);
 		msg_id++;
 	}while(msg != NULL);
+	pthread_mutex_unlock(&channels->lock); 
 }
 
 void send_message_resp(int client_socket){
@@ -106,20 +125,30 @@ void send_message_resp(int client_socket){
 	text = (char *) malloc(text_size);
 	read(client_socket, text, text_size);
 
-	channel_list_t *channel_list = get_channels();
-	channel_t *channel = get_channel(channel_list, channel_name);
+	channel_list_t *channels = get_channels();
+	pthread_mutex_lock(&channels->lock); 
+	channel_t *channel = get_channel(channels, channel_name);
 
 	if(channel == NULL){
-		channel = create_channel(channel_list, channel_name);
+		channel = create_channel(channels, channel_name);
 	}
 	add_message(channel, text);
+	pthread_mutex_unlock(&channels->lock); 
 
 	// printf("message added: %s", text);
 	
 }
 
+typedef struct args{
+	int num_threads, socket;
+}args_t; 
 
-void run_server(int sockfd, int num_threads) {
+// void run_server(int sockfd, int num_threads) {
+void run_server(void * args) {
+	args_t arg = *(args_t *) args; 	
+	int sockfd = arg.socket;
+	int num_clients = arg.num_threads;
+
     struct sockaddr_in cli;
     socklen_t len = sizeof(cli);
 
@@ -159,9 +188,6 @@ void run_server(int sockfd, int num_threads) {
         }
     }
 }
-
-
-
 
 int main() {
 	channel_list_t *channels = get_channels();
@@ -207,7 +233,29 @@ int main() {
 		printf("Server listening..\n");
     }
 	
-    run_server(sockfd, 10);
+	int num_threads = 100; 
+
+	pthread_t threads[num_threads];
+
+	args_t args = *(args_t *) malloc(sizeof(args_t));
+	args.socket = sockfd; 
+
+    for (int i = 0; i < num_threads; i++) {
+        int r = pthread_create(&threads[i], NULL, (void *)run_server, &args);
+        if (r != 0) {
+            printf("Failure to create thread\n");
+            exit(-1);
+        } 
+    } 
+
+	for (int i = 0; i < num_threads; i++) {
+        int r = pthread_join(threads[i], NULL);
+        if (r != 0) {
+            printf("Failure to join on thread\n");
+            exit(-1);
+        }
+    }
+    // run_server(sockfd, 10);
 
 
 

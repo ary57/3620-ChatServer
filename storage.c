@@ -9,19 +9,21 @@ channel_list_t *get_channels() {
 	if (channel_list == NULL) {
 		channel_list = (channel_list_t *) malloc(sizeof(channel_list_t));
 		channel_list->head = NULL;
-		channel_list->head = NULL;
+		channel_list->tail = NULL;
 	}
 	
     return channel_list;
 }
 
 channel_t *create_channel(channel_list_t *channels, const char *name) {
+	pthread_mutex_lock(&channels->lock);
 	channel_t *pointer = channels->head;
 
 	while(pointer != NULL){
 		char *ptrName = (char *) pointer->name; 
 		if(strcmp(ptrName, name) == 0){
 			// printf("%s: %s\n", "Duplicate Found", name);
+			pthread_mutex_unlock(&channels->lock);
 			return pointer; 
 		}
 		pointer = pointer->next;
@@ -43,16 +45,25 @@ channel_t *create_channel(channel_list_t *channels, const char *name) {
 		channels->tail->next = c; 
 		channels->tail = c; 
 	}
+	pthread_mutex_unlock(&channels->lock);
 
     return c;
 }
 
 channel_t *get_channel(channel_list_t *channels, const char *name) {
+	pthread_mutex_lock(&channels->lock);
+
 	channel_t *pointer = channels->head;
 	while(pointer != NULL){
-		if( strcmp(pointer->name, name) == 0) return pointer; 
+		if( strcmp(pointer->name, name) == 0) {
+			pthread_mutex_unlock(&channels->lock);
+
+			return pointer; 
+		}
 		pointer = pointer->next; 
 	}
+
+	pthread_mutex_unlock(&channels->lock);
 	return NULL;
 }
 
@@ -78,6 +89,8 @@ void free_channels(channel_list_t *channels) {
 }
 
 void add_message(channel_t *channel, const char *text) {
+	pthread_mutex_lock(&channel->lock);
+
 	message_t *m = (message_t *) malloc(sizeof(message_t));
 	m->text = text; 
 	if(channel->head == NULL){ 
@@ -89,14 +102,24 @@ void add_message(channel_t *channel, const char *text) {
 		channel->tail->next = m; 
 		channel->tail = m;
 	}
+
+	pthread_mutex_unlock(&channel->lock);
 }
 
 message_t *get_message(channel_t *channel, message_id_t id) {
+	pthread_mutex_lock(&channel->lock);
+
 	message_t *pointer = channel->head; 
 	while(pointer != NULL){
-		if(pointer->id == id) return pointer;
+		if(pointer->id == id){
+			
+			pthread_mutex_unlock(&channel->lock);
+
+			return pointer;
+		}
 		pointer = pointer->next; 
 	}
+	pthread_mutex_unlock(&channel->lock);
 	return NULL; 
 }
 
