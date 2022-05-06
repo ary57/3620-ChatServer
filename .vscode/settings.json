@@ -3,6 +3,9 @@
         "unistd.h": "c",
         "commands.h": "c",
         "netdb.h": "c",
-        "storage.h": "c"
+        "storage.h": "c",
+        "socket.h": "c",
+        "in.h": "c",
+        "stdlib.h": "c"
     }
 }

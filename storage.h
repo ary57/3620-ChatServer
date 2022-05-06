@@ -1,5 +1,4 @@
 #include <stdint.h>
-#include <pthread.h>
 
 typedef uint64_t message_id_t;
 typedef char* channel_id_t;
@@ -8,7 +7,6 @@ typedef struct message {
 	message_id_t id;
 	const char *text;
 	struct message *next;
-	pthread_mutex_t lock; 
 } message_t;
 
 
@@ -18,15 +16,11 @@ typedef struct channel {
 	message_t *head;
 	message_t *tail;
 	message_id_t last_msg;
-	pthread_mutex_t lock; 
-
 } channel_t;
 
 typedef struct channel_list {
 	channel_t *head;
 	channel_t *tail;
-	pthread_mutex_t lock; 
-
 } channel_list_t;
 
 
